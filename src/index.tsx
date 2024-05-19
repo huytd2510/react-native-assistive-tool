@@ -20,3 +20,7 @@ const AssistiveTool = NativeModules.AssistiveTool
 export function multiply(a: number, b: number): Promise<number> {
   return AssistiveTool.multiply(a, b);
 }
+
+export * from './assistive/assistive-cmp';
+export * from './assistive/assistive';
+export * from './modal';

@@ -71,14 +71,20 @@
     "react-native-builder-bob": "^0.20.0",
     "release-it": "^15.0.0",
     "turbo": "^1.10.7",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "@react-native-async-storage/async-storage": "^1.23.1",
+    "react-native-mmkv-storage": "^0.9.1",
+    "react-native-network-logger": "^1.16.1"
   },
   "resolutions": {
     "@types/react": "^18.2.44"
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "@react-native-async-storage/async-storage": "*",
+    "react-native-mmkv-storage": "*",
+    "react-native-network-logger": "*"
   },
   "workspaces": [
     "example"
