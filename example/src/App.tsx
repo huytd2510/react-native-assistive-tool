@@ -6,6 +6,9 @@ import { MMVKdemo } from './mmkv/mmkv';
 import { StogareDemo } from './storage/stogare';
 import { AssistiveTouch } from 'react-native-assistive-tool';
 import { NavigationDemo } from './navigation/navigation-demo';
+import store from './store';
+import { Provider } from 'react-redux';
+
 export const navigationRef = React.createRef();
 
 const Stack = createNativeStackNavigator();
@@ -51,24 +54,26 @@ const Home = () => {
 };
 const App: React.FC = () => {
   return (
-    <NavigationContainer
-      // @ts-ignore
-      ref={navigationRef}
-    >
-      <AssistiveTouch
-        color="black"
-        size={70}
+    <Provider store={store}>
+      <NavigationContainer
         // @ts-ignore
-        navigationRef={navigationRef}
+        ref={navigationRef}
       >
-        <Stack.Navigator>
-          <Stack.Screen name={'Home'} component={Home} />
-          <Stack.Screen name={'MMVK'} children={MMVKdemo} />
-          <Stack.Screen name={'StogareDemo'} children={StogareDemo} />
-          <Stack.Screen name={'NavigationDemo'} children={NavigationDemo} />
-        </Stack.Navigator>
-      </AssistiveTouch>
-    </NavigationContainer>
+        <AssistiveTouch
+          color='black'
+          size={70}
+          // @ts-ignore
+          navigationRef={navigationRef}
+        >
+          <Stack.Navigator>
+            <Stack.Screen name={'Home'} component={Home} />
+            <Stack.Screen name={'MMVK'} children={MMVKdemo} />
+            <Stack.Screen name={'StogareDemo'} children={StogareDemo} />
+            <Stack.Screen name={'NavigationDemo'} children={NavigationDemo} />
+          </Stack.Navigator>
+        </AssistiveTouch>
+      </NavigationContainer>
+    </Provider>
   );
 };
 
