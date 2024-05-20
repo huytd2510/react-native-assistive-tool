@@ -46,7 +46,11 @@ export const NavigationLogger = (props: NavigationLoggerProps) => {
     );
   };
   if (!data) {
-    return <View>Can't show navigation stack</View>;
+    return (
+      <View>
+        <Text>Can't show navigation stack</Text>
+      </View>
+    );
   }
   return (
     <View style={styles.container}>

@@ -8,20 +8,24 @@ import {
   Alert,
   TouchableOpacity,
   ActivityIndicator,
-  Clipboard
+  Clipboard,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PAGE_SIZE = 10;
 
-const KeyValueTable = () => {
-  const [data, setData] = useState([]);
-  const [editingKey, setEditingKey] = useState(null);
-  const [newValue, setNewValue] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredData, setFilteredData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+interface KeyValueItem {
+  key: string;
+  value: string;
+}
+
+const KeyValueTable: React.FC = () => {
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [newValue, setNewValue] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filteredData, setFilteredData] = useState<KeyValueItem[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchData();
@@ -29,7 +33,7 @@ const KeyValueTable = () => {
 
   useEffect(() => {
     handleSearch(searchQuery);
-  }, [searchQuery, data]);
+  }, [searchQuery]);
 
   const fetchData = async () => {
     try {
@@ -37,8 +41,6 @@ const KeyValueTable = () => {
       const keys = await AsyncStorage.getAllKeys();
       const items = await AsyncStorage.multiGet(keys);
       const formattedData = items.map(([key, value]) => ({ key, value }));
-      // @ts-ignore
-      setData(formattedData);
       // @ts-ignore
       setFilteredData(formattedData.slice(0, PAGE_SIZE));
       setCurrentPage(1);
@@ -49,7 +51,7 @@ const KeyValueTable = () => {
     }
   };
 
-  const handleDelete = async (key: any) => {
+  const handleDelete = async (key: string) => {
     try {
       Alert.alert(
         'Confirm',
@@ -74,7 +76,7 @@ const KeyValueTable = () => {
     }
   };
 
-  const handleEdit = async (key: any) => {
+  const handleEdit = async (key: string) => {
     if (newValue.trim() === '') {
       Alert.alert('Validation', 'New value cannot be empty');
       return;
@@ -106,32 +108,54 @@ const KeyValueTable = () => {
     }
   };
 
-  const handleSearch = (query: any) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    const lowerQuery = query.toLowerCase();
-    const filtered = data.filter(
-      (item) =>
-        // @ts-ignore
-        item.key.toLowerCase().includes(lowerQuery) ||
-        // @ts-ignore
-        item.value.toLowerCase().includes(lowerQuery)
-    );
-    setFilteredData(filtered.slice(0, PAGE_SIZE));
-    setCurrentPage(1);
+    if (query.trim() === '') {
+      fetchData();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const keys = await AsyncStorage.getAllKeys();
+      const lowerQuery = query.toLowerCase();
+      const filteredKeys = keys.filter((key) =>
+        key.toLowerCase().includes(lowerQuery)
+      );
+      const filteredItems = await AsyncStorage.multiGet(filteredKeys);
+      const formattedData = filteredItems.map(([key, value]) => ({
+        key,
+        value,
+      }));
+
+      // @ts-ignore
+      setFilteredData(formattedData.slice(0, PAGE_SIZE));
+      setCurrentPage(1);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error searching data:', error);
+      setLoading(false);
+    }
   };
 
-  const loadMoreData = () => {
+  const loadMoreData = async () => {
     if (loading) return;
     const nextPage = currentPage + 1;
     const startIndex = nextPage * PAGE_SIZE;
-    const additionalData = filteredData.concat(
-      data.slice(startIndex, startIndex + PAGE_SIZE)
+    const keys = await AsyncStorage.getAllKeys();
+    const filteredKeys = keys.filter((key) =>
+      key.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    setFilteredData(additionalData);
+    const pageKeys = filteredKeys.slice(startIndex, startIndex + PAGE_SIZE);
+    const items = await AsyncStorage.multiGet(pageKeys);
+    const additionalData = items.map(([key, value]) => ({ key, value }));
+
+    // @ts-ignore
+    setFilteredData((prevData) => [...prevData, ...additionalData]);
     setCurrentPage(nextPage);
   };
 
-  const renderItem = ({ item }: any) => (
+  const renderItem = ({ item }: { item: KeyValueItem }) => (
     <View style={styles.row}>
       <View style={styles.cellContainer}>
         <Text style={styles.cell}>{item.key}</Text>
@@ -212,7 +236,6 @@ const KeyValueTable = () => {
       <FlatList
         data={filteredData}
         renderItem={renderItem}
-        // @ts-ignore
         keyExtractor={(item) => item.key}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.5}
