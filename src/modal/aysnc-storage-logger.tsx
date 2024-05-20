@@ -14,21 +14,26 @@ const KeyValueTable = () => {
   const [data, setData] = useState([]);
   const [editingKey, setEditingKey] = useState(null);
   const [newValue, setNewValue] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    handleSearch(searchQuery);
+  }, [data, searchQuery]);
+
   const fetchData = async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
       const items = await AsyncStorage.multiGet(keys);
-      const formattedData = items.map(([key, value]) => ({
-        key,
-        value,
-      }));
+      const formattedData = items.map(([key, value]) => ({ key, value }));
       // @ts-ignore
       setData(formattedData);
+      // @ts-ignore
+      setFilteredData(formattedData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -91,6 +96,19 @@ const KeyValueTable = () => {
     }
   };
 
+  const handleSearch = (query: any) => {
+    setSearchQuery(query);
+    if (query.trim() === '') {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter(
+        // @ts-ignore
+        (item) => item.key.includes(query) || item.value.includes(query)
+      );
+      setFilteredData(filtered);
+    }
+  };
+
   const renderItem = ({ item }: any) => (
     <View style={styles.row}>
       <View style={styles.cellContainer}>
@@ -102,8 +120,8 @@ const KeyValueTable = () => {
               value={newValue}
               onChangeText={setNewValue}
               placeholder="Enter new value"
-              multiline={true} // Cho phép nhập nhiều dòng
-              numberOfLines={4} // Số dòng hiển thị ban đầu
+              multiline={true}
+              numberOfLines={4}
             />
             <Button title="Save" onPress={() => handleEdit(item.key)} />
             <Button title="Cancel" onPress={() => setEditingKey(null)} />
@@ -129,16 +147,21 @@ const KeyValueTable = () => {
     </View>
   );
 
-
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        value={searchQuery}
+        onChangeText={handleSearch}
+        placeholder="Search by key or value"
+      />
       <View style={styles.header}>
         <Text style={styles.headerCell}>Key</Text>
         <Text style={styles.headerCell}>Value</Text>
         <Text style={styles.headerCell}>Actions</Text>
       </View>
       <FlatList
-        data={data}
+        data={filteredData}
         renderItem={renderItem}
         // @ts-ignore
         keyExtractor={(item) => item.key}
@@ -151,6 +174,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  searchInput: {
+    borderColor: '#ccc',
+    borderWidth: 1,
+    padding: 8,
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
@@ -180,8 +209,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 8,
     margin: 8,
-    height: 200, // Điều chỉnh chiều cao của TextInput
-    textAlignVertical: 'top', // Hiển thị văn bản từ trên xuống
+    height: 200,
+    textAlignVertical: 'top',
   },
   actionContainer: {
     flex: 1,
