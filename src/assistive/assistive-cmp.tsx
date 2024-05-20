@@ -22,6 +22,7 @@ interface IAssistiveTouch {
   button?: React.ReactNode;
   children?: React.ReactNode;
   customNetworkComponent?: React.ReactNode;
+  navigationRef?: React.Ref<any>;
 }
 
 export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
@@ -173,6 +174,7 @@ export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
         visible={visible}
         close={() => setVisible(false)}
         customNetworkComponent={props.customNetworkComponent}
+        navigationRef={props.navigationRef}
       />
     </View>
   );
@@ -216,8 +218,8 @@ const AssistiveTouchButton: React.FC<{
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
   },
   box: {
     zIndex: 1,

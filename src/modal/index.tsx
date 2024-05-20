@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 import NetworkLogger from 'react-native-network-logger';
 import KeyValueTable from './aysnc-storage-logger';
+import { NavigationLogger } from './navigation-logger';
 
 interface AssistiveModalProps {
   visible: boolean;
   close: () => void;
   customNetworkComponent?: React.ReactNode;
+  navigationRef?: React.Ref<any>;
 }
 
 const NetworkComponent: React.FC = () => {
@@ -18,9 +20,9 @@ const DataInLocalComponent: React.FC = () => {
 };
 
 export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
-  const [activeTab, setActiveTab] = useState<'network' | 'data' | 'dataMMKV'>(
-    'network'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'network' | 'data' | 'dataMMKV' | 'navigation'
+  >('network');
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -32,6 +34,8 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
         );
       case 'data':
         return <DataInLocalComponent />;
+      case 'navigation':
+        return <NavigationLogger navigationRef={props.navigationRef}/>;
       // case 'dataMMKV':
       //   return <MMKVKeyValueTable />;
       default:
@@ -66,7 +70,16 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
               style={[styles.tab, activeTab === 'data' && styles.activeTab]}
               onPress={() => setActiveTab('data')}
             >
-              <Text style={styles.tabText}>Async storage</Text>
+              <Text style={styles.tabText}>AsyncStorage</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'navigation' && styles.activeTab,
+              ]}
+              onPress={() => setActiveTab('navigation')}
+            >
+              <Text style={styles.tabText}>Navigation</Text>
             </TouchableOpacity>
             {/*<TouchableOpacity*/}
             {/*  style={[styles.tab, activeTab === 'dataMMKV' && styles.activeTab]}*/}
