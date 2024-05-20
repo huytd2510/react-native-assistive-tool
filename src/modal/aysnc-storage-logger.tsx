@@ -153,7 +153,13 @@ const KeyValueTable = () => {
               style={styles.button}
               onPress={() => setEditingKey(null)}
             >
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text
+                style={styles.buttonText}
+                numberOfLines={6}
+                ellipsizeMode={'tail'}
+              >
+                Cancel
+              </Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -251,11 +257,11 @@ const styles = StyleSheet.create({
     margin: 8,
     height: 200,
     textAlignVertical: 'top',
+    color: 'black',
   },
   actionContainer: {
     flex: 1,
     flexDirection: 'column',
-    justifyContent: 'center',
   },
   button: {
     backgroundColor: '#007BFF',
