@@ -7,6 +7,8 @@ import {
   TextInput,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
+  Clipboard
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -141,7 +143,7 @@ const KeyValueTable = () => {
               onChangeText={setNewValue}
               placeholder="Enter new value"
               multiline={true}
-              numberOfLines={4}
+              numberOfLines={10}
             />
             <TouchableOpacity
               style={styles.button}
@@ -153,22 +155,26 @@ const KeyValueTable = () => {
               style={styles.button}
               onPress={() => setEditingKey(null)}
             >
-              <Text
-                style={styles.buttonText}
-                numberOfLines={6}
-                ellipsizeMode={'tail'}
-              >
-                Cancel
-              </Text>
+              <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </>
         ) : (
-          <Text style={styles.cell}>{item.value}</Text>
+          <Text style={styles.cell} numberOfLines={10} ellipsizeMode={'tail'}>
+            {item.value}
+          </Text>
         )}
       </View>
       <View style={styles.actionContainer}>
         {editingKey !== item.key && (
           <>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                Clipboard.setString(JSON.stringify(item));
+              }}
+            >
+              <Text style={styles.buttonText}>Copy</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.button}
               onPress={() => {
@@ -210,7 +216,9 @@ const KeyValueTable = () => {
         keyExtractor={(item) => item.key}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={loading ? <Text>Loading...</Text> : null}
+        ListFooterComponent={
+          loading ? <ActivityIndicator size={'small'} /> : null
+        }
       />
     </View>
   );
@@ -261,6 +269,8 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     flex: 1,
+    height: '100%',
+    paddingTop: 20,
     flexDirection: 'column',
   },
   button: {
