@@ -8,6 +8,7 @@ interface IAssistiveTouch {
     button?: React.ReactNode;
     children?: React.ReactNode;
     customNetworkComponent?: React.ReactNode;
+    navigationRef?: React.Ref<any>;
 }
 export declare const AssistiveTouch: React.FC<IAssistiveTouch>;
 export {};

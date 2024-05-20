@@ -35,7 +35,9 @@ const KeyValueTable = () => {
       const keys = await AsyncStorage.getAllKeys();
       const items = await AsyncStorage.multiGet(keys);
       const formattedData = items.map(([key, value]) => ({ key, value }));
+      // @ts-ignore
       setData(formattedData);
+      // @ts-ignore
       setFilteredData(formattedData.slice(0, PAGE_SIZE));
       setCurrentPage(1);
       setLoading(false);
@@ -45,7 +47,7 @@ const KeyValueTable = () => {
     }
   };
 
-  const handleDelete = async (key) => {
+  const handleDelete = async (key: any) => {
     try {
       Alert.alert(
         'Confirm',
@@ -70,7 +72,7 @@ const KeyValueTable = () => {
     }
   };
 
-  const handleEdit = async (key) => {
+  const handleEdit = async (key: any) => {
     if (newValue.trim() === '') {
       Alert.alert('Validation', 'New value cannot be empty');
       return;
@@ -102,12 +104,14 @@ const KeyValueTable = () => {
     }
   };
 
-  const handleSearch = (query) => {
+  const handleSearch = (query: any) => {
     setSearchQuery(query);
     const lowerQuery = query.toLowerCase();
     const filtered = data.filter(
       (item) =>
+        // @ts-ignore
         item.key.toLowerCase().includes(lowerQuery) ||
+        // @ts-ignore
         item.value.toLowerCase().includes(lowerQuery)
     );
     setFilteredData(filtered.slice(0, PAGE_SIZE));
@@ -125,7 +129,7 @@ const KeyValueTable = () => {
     setCurrentPage(nextPage);
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item }: any) => (
     <View style={styles.row}>
       <View style={styles.cellContainer}>
         <Text style={styles.cell}>{item.key}</Text>
@@ -196,6 +200,7 @@ const KeyValueTable = () => {
       <FlatList
         data={filteredData}
         renderItem={renderItem}
+        // @ts-ignore
         keyExtractor={(item) => item.key}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.5}
