@@ -11132,6 +11132,8 @@ __metadata:
     react-native-network-logger: "*"
     react-native-safe-area-context: "*"
     react-native-screens: "*"
+    react-redux: "*"
+    redux: "*"
   languageName: unknown
   linkType: soft
 

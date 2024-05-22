@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Modal, StyleSheet, TouchableOpacity, Text, View, ScrollView } from 'react-native';
+import {
+  Modal,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  View,
+  ScrollView,
+} from 'react-native';
 import NetworkLogger from 'react-native-network-logger';
 import KeyValueTable from './aysnc-storage-logger';
 import { NavigationLogger } from './navigation-logger';
@@ -36,9 +43,9 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
       case 'data':
         return <DataInLocalComponent />;
       case 'navigation':
-        return <NavigationLogger navigationRef={props.navigationRef}/>;
+        return <NavigationLogger navigationRef={props.navigationRef} />;
       case 'redux':
-        return <ReduxLogger/>;
+        return <ReduxLogger />;
       // case 'dataMMKV':
       //   return <MMKVKeyValueTable />;
       default:
@@ -62,45 +69,49 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
           >
             <Text>Closes</Text>
           </TouchableOpacity>
-          <View style={{height: 40, width: '100%'}}>
-          <ScrollView contentContainerStyle={styles.tabBar} horizontal={true} showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'network' && styles.activeTab]}
-              onPress={() => setActiveTab('network')}
+          <View style={{ height: 40, width: '100%' }}>
+            <ScrollView
+              contentContainerStyle={styles.tabBar}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
             >
-              <Text style={styles.tabText}>Network</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'data' && styles.activeTab]}
-              onPress={() => setActiveTab('data')}
-            >
-              <Text style={styles.tabText}>AsyncStorage</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                activeTab === 'navigation' && styles.activeTab,
-              ]}
-              onPress={() => setActiveTab('navigation')}
-            >
-              <Text style={styles.tabText}>Navigation</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                activeTab === 'redux' && styles.activeTab,
-              ]}
-              onPress={() => setActiveTab('redux')}
-            >
-              <Text style={styles.tabText}>Redux</Text>
-            </TouchableOpacity>
-            {/*<TouchableOpacity*/}
-            {/*  style={[styles.tab, activeTab === 'dataMMKV' && styles.activeTab]}*/}
-            {/*  onPress={() => setActiveTab('dataMMKV')}*/}
-            {/*>*/}
-            {/*  <Text style={styles.tabText}>MMKV</Text>*/}
-            {/*</TouchableOpacity>*/}
-          </ScrollView>
+              <TouchableOpacity
+                style={[
+                  styles.tab,
+                  activeTab === 'network' && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab('network')}
+              >
+                <Text style={styles.tabText}>Network</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'data' && styles.activeTab]}
+                onPress={() => setActiveTab('data')}
+              >
+                <Text style={styles.tabText}>AsyncStorage</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.tab,
+                  activeTab === 'navigation' && styles.activeTab,
+                ]}
+                onPress={() => setActiveTab('navigation')}
+              >
+                <Text style={styles.tabText}>Navigation</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'redux' && styles.activeTab]}
+                onPress={() => setActiveTab('redux')}
+              >
+                <Text style={styles.tabText}>Redux</Text>
+              </TouchableOpacity>
+              {/*<TouchableOpacity*/}
+              {/*  style={[styles.tab, activeTab === 'dataMMKV' && styles.activeTab]}*/}
+              {/*  onPress={() => setActiveTab('dataMMKV')}*/}
+              {/*>*/}
+              {/*  <Text style={styles.tabText}>MMKV</Text>*/}
+              {/*</TouchableOpacity>*/}
+            </ScrollView>
           </View>
           {renderTabContent()}
         </View>
@@ -125,7 +136,7 @@ const styles = StyleSheet.create({
   },
   card: {
     alignSelf: 'stretch',
-    height: '95%',
+    height: '80%',
     backgroundColor: 'white',
     borderRadius: 10,
     margin: 20,
@@ -135,7 +146,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
     height: 40,
-    backgroundColor: 'row'
+    backgroundColor: 'row',
   },
   tab: {
     padding: 10,
