@@ -69,9 +69,9 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
               }}
               onPress={props.close}
             >
-              <Text>Closes</Text>
+              <Text>Close</Text>
             </TouchableOpacity>
-            <View style={{ height: 40, width: '100%' }}>
+            <View style={{ height: '6%', width: '100%' }}>
               <ScrollView
                 contentContainerStyle={styles.tabBar}
                 horizontal={true}
@@ -118,7 +118,7 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
                 {/*</TouchableOpacity>*/}
               </ScrollView>
             </View>
-            {renderTabContent()}
+            <View style={styles.contentView}>{renderTabContent()}</View>
           </View>
         </View>
       </SafeAreaView>
@@ -133,6 +133,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  contentView: {
+    height: '85%',
+    borderTopWidth: 0.5,
+    borderTopColor: 'grey',
   },
   containerCard: {
     alignSelf: 'stretch',
@@ -156,13 +161,14 @@ const styles = StyleSheet.create({
   },
   tab: {
     padding: 10,
+    paddingVertical: 6,
   },
   activeTab: {
     borderBottomWidth: 2,
     borderBottomColor: 'blue',
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 14,
   },
   tabContent: {
     flex: 1,

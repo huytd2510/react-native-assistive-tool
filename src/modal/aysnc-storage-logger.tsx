@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderWidth: 1,
     padding: 8,
+    borderRadius: 12,
     marginBottom: 16,
   },
   header: {

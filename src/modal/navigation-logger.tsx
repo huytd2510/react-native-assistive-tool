@@ -1,4 +1,10 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Clipboard,
+} from 'react-native';
 import React, { useState } from 'react';
 
 export interface NavigationLoggerProps {
@@ -54,6 +60,18 @@ export const NavigationLogger = (props: NavigationLoggerProps) => {
   }
   return (
     <View style={styles.container}>
+      <View style={{justifyContent: 'center', alignItems: 'flex-end', backgroundColor: 'white', padding: 5, paddingRight: 20}}>
+        <TouchableOpacity
+          onPress={() => {
+            // @ts-ignore
+            Clipboard.setString(JSON.stringify(data));
+          }}
+        >
+          <Text style={{ color: 'blue', opacity: 0.7 }}>
+            Copy current stack in navigation
+          </Text>
+        </TouchableOpacity>
+      </View>
       {data.map((item: any) => renderNestedItems(item))}
     </View>
   );
@@ -62,7 +80,6 @@ export const NavigationLogger = (props: NavigationLoggerProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
   },
   item: {
     marginBottom: 10,

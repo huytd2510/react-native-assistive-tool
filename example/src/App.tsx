@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, Button } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, Button, DeviceEventEmitter } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MMVKdemo } from './mmkv/mmkv';
 import { StogareDemo } from './storage/stogare';
-import { AssistiveTouch } from 'react-native-assistive-tool';
+import { AssistiveTouch, FORCE_SHOW_DEBUGGER_MODE } from 'react-native-assistive-tool';
 import { NavigationDemo } from './navigation/navigation-demo';
 import store from './store';
 import { Provider } from 'react-redux';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export const navigationRef = React.createRef();
 
@@ -49,31 +50,41 @@ const Home = () => {
       >
         <Text>Navigate to NavigationDemo</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={{ marginTop: 20 }}
+        onPress={() => {
+          DeviceEventEmitter.emit(FORCE_SHOW_DEBUGGER_MODE);
+        }}
+      >
+        <Text>Force show</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 const App: React.FC = () => {
   return (
-    <Provider store={store}>
-      <NavigationContainer
-        // @ts-ignore
-        ref={navigationRef}
-      >
-        <AssistiveTouch
-          color='black'
-          size={70}
+    <GestureHandlerRootView>
+      <Provider store={store}>
+        <NavigationContainer
           // @ts-ignore
-          navigationRef={navigationRef}
+          ref={navigationRef}
         >
-          <Stack.Navigator>
-            <Stack.Screen name={'Home'} component={Home} />
-            <Stack.Screen name={'MMVK'} children={MMVKdemo} />
-            <Stack.Screen name={'StogareDemo'} children={StogareDemo} />
-            <Stack.Screen name={'NavigationDemo'} children={NavigationDemo} />
-          </Stack.Navigator>
-        </AssistiveTouch>
-      </NavigationContainer>
-    </Provider>
+          <AssistiveTouch
+            color="black"
+            size={70}
+            // @ts-ignore
+            navigationRef={navigationRef}
+          >
+            <Stack.Navigator>
+              <Stack.Screen name={'Home'} component={Home} />
+              <Stack.Screen name={'MMVK'} children={MMVKdemo} />
+              <Stack.Screen name={'StogareDemo'} children={StogareDemo} />
+              <Stack.Screen name={'NavigationDemo'} children={NavigationDemo} />
+            </Stack.Navigator>
+          </AssistiveTouch>
+        </NavigationContainer>
+      </Provider>
+    </GestureHandlerRootView>
   );
 };
 
