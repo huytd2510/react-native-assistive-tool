@@ -10,6 +10,7 @@ interface IAssistiveTouch {
     customNetworkComponent?: React.ReactNode;
     navigationRef?: React.Ref<any>;
     hideAssistiveTouch?: boolean;
+    callbackEventShowDebugger?: () => void;
 }
 export declare const AssistiveTouch: React.FC<IAssistiveTouch>;
 export {};

@@ -7,9 +7,12 @@ import {
   Dimensions,
   TouchableOpacity,
   DeviceEventEmitter,
+  type EmitterSubscription,
 } from 'react-native';
 import { AssistiveHelper, FORCE_SHOW_DEBUGGER_MODE } from './assistive';
 import AssistiveTouchModal from '../modal';
+import RNShake from 'react-native-shake';
+import { checkShakeLibrary } from '../utils/helper';
 
 const { height } = Dimensions.get('window');
 
@@ -24,43 +27,58 @@ interface IAssistiveTouch {
   customNetworkComponent?: React.ReactNode;
   navigationRef?: React.Ref<any>;
   hideAssistiveTouch?: boolean;
+  callbackEventShowDebugger?: () => void;
 }
 
 export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
   const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    // must record network logs
-    AssistiveHelper.shared;
-  }, []);
+  let count = 0;
   const FAB_WIDTH = props.size || 70; // Size of the AssistiveTouch (must)
-  // const Y_PERCENTAGE = props.percentage || 0.2; // Vertical percentage of slide
-
-  // let view_height = height;
-  // let view_width = width;
-  // let view_start_y = 0;
-  // let view_start_x = 0;
-  // let view_end_x = width;
-  // let view_end_y = height;
-  // let current_position_x = width - FAB_WIDTH / 2;
-  // let current_position_y = height / 2;
 
   const pan = useRef(new Animated.ValueXY({ x: 0, y: height / 2 })).current;
   let panValueRef = useRef({ x: 0, y: height / 2 });
   useEffect(() => {
+    // must record network logs
+    AssistiveHelper.shared;
     pan.addListener((value) => {
       panValueRef.current = value;
     });
+    let subscription: null | EmitterSubscription;
+    if (checkShakeLibrary()) {
+      subscription = RNShake.addListener(() => {
+        if (props.hideAssistiveTouch === true) return;
+        setVisible(true);
+      });
+    }
     const listener = DeviceEventEmitter.addListener(
       FORCE_SHOW_DEBUGGER_MODE,
       (_) => {
-        setVisible(true);
+        actionEvent();
       }
     );
     return () => {
       listener.remove();
+      if (subscription) {
+        subscription.remove();
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const actionEvent = () => {
+    if (count < 4) {
+      count++;
+      setTimeout(() => {
+        count = 0;
+      }, 3000);
+    } else {
+      if (!props.hideAssistiveTouch) {
+        setVisible(true);
+      }
+      props.callbackEventShowDebugger && props.callbackEventShowDebugger();
+      count = 0;
+    }
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: () => true,

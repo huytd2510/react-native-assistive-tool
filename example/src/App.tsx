@@ -74,6 +74,9 @@ const App: React.FC = () => {
             size={70}
             // @ts-ignore
             navigationRef={navigationRef}
+            callbackEventShowDebugger={() => {
+
+            }}
           >
             <Stack.Navigator>
               <Stack.Screen name={'Home'} component={Home} />
