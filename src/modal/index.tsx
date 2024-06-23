@@ -30,7 +30,7 @@ const DataInLocalComponent: React.FC = () => {
 
 export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
   const [activeTab, setActiveTab] = useState<
-    'network' | 'data' | 'dataMMKV' | 'navigation' | 'redux'
+    'network' | 'data' | 'navigation' | 'redux'
   >('network');
 
   const renderTabContent = () => {
@@ -110,12 +110,6 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
                 >
                   <Text style={styles.tabText}>Redux</Text>
                 </TouchableOpacity>
-                {/*<TouchableOpacity*/}
-                {/*  style={[styles.tab, activeTab === 'dataMMKV' && styles.activeTab]}*/}
-                {/*  onPress={() => setActiveTab('dataMMKV')}*/}
-                {/*>*/}
-                {/*  <Text style={styles.tabText}>MMKV</Text>*/}
-                {/*</TouchableOpacity>*/}
               </ScrollView>
             </View>
             <View style={styles.contentView}>{renderTabContent()}</View>

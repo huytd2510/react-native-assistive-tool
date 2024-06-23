@@ -140,16 +140,20 @@ const KeyValueTable: React.FC = () => {
 
   const loadMoreData = async () => {
     if (loading) return;
+    setLoading(true);
     const nextPage = currentPage + 1;
     const startIndex = nextPage * PAGE_SIZE;
     const keys = await AsyncStorage.getAllKeys();
-    const filteredKeys = keys.filter((key) =>
-      key.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    let filteredKeys = keys;
+    if (searchQuery.trim() !== '') {
+      filteredKeys = keys.filter((key) =>
+        key.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
     const pageKeys = filteredKeys.slice(startIndex, startIndex + PAGE_SIZE);
     const items = await AsyncStorage.multiGet(pageKeys);
     const additionalData = items.map(([key, value]) => ({ key, value }));
-
+    setLoading(false);
     // @ts-ignore
     setFilteredData((prevData) => [...prevData, ...additionalData]);
     setCurrentPage(nextPage);
@@ -184,7 +188,8 @@ const KeyValueTable: React.FC = () => {
           </>
         ) : (
           <Text style={styles.cell} numberOfLines={10} ellipsizeMode={'tail'}>
-            {item.value}
+            {item.value.substring(0, 100)}
+            {item.value.length > 100 ? '  ...' : ''}
           </Text>
         )}
       </View>
@@ -238,7 +243,7 @@ const KeyValueTable: React.FC = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.key}
         onEndReached={loadMoreData}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.3}
         ListFooterComponent={
           loading ? <ActivityIndicator size={'small'} /> : null
         }

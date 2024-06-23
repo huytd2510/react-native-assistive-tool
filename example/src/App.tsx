@@ -1,14 +1,25 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, Button, DeviceEventEmitter } from 'react-native';
+import {
+  TouchableOpacity,
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  DeviceEventEmitter,
+} from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MMVKdemo } from './mmkv/mmkv';
 import { StogareDemo } from './storage/stogare';
-import { AssistiveTouch, FORCE_SHOW_DEBUGGER_MODE } from 'react-native-assistive-tool';
+import {
+  AssistiveTouch,
+  FORCE_SHOW_DEBUGGER_MODE,
+} from 'react-native-assistive-tool';
 import { NavigationDemo } from './navigation/navigation-demo';
 import store from './store';
 import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { mmkv, mmkv2 } from './mmkv/helper';
 
 export const navigationRef = React.createRef();
 
@@ -62,6 +73,7 @@ const Home = () => {
   );
 };
 const App: React.FC = () => {
+  console.log(mmkv.getAllKeys());
   return (
     <GestureHandlerRootView>
       <Provider store={store}>
@@ -74,9 +86,8 @@ const App: React.FC = () => {
             size={70}
             // @ts-ignore
             navigationRef={navigationRef}
-            callbackEventShowDebugger={() => {
-
-            }}
+            callbackEventShowDebugger={() => {}}
+            mmkvInstances={[mmkv, mmkv2]}
           >
             <Stack.Navigator>
               <Stack.Screen name={'Home'} component={Home} />
