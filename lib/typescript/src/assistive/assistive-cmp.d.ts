@@ -1,4 +1,8 @@
 import React from 'react';
+export interface DebugAddOnView {
+    title: string;
+    component: React.ReactNode;
+}
 interface IAssistiveTouch {
     onPress?: () => void;
     onMoveEnd?: () => void;
@@ -11,6 +15,7 @@ interface IAssistiveTouch {
     navigationRef?: React.Ref<any>;
     hideAssistiveTouch?: boolean;
     callbackEventShowDebugger?: () => void;
+    debugAddOnView?: DebugAddOnView[];
 }
 export declare const AssistiveTouch: React.FC<IAssistiveTouch>;
 export {};

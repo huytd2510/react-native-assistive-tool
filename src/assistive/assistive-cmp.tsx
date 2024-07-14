@@ -16,6 +16,11 @@ import { checkShakeLibrary } from '../utils/helper';
 
 const { height } = Dimensions.get('window');
 
+export interface DebugAddOnView {
+  title: string;
+  component: React.ReactNode;
+}
+
 interface IAssistiveTouch {
   onPress?: () => void;
   onMoveEnd?: () => void;
@@ -28,6 +33,7 @@ interface IAssistiveTouch {
   navigationRef?: React.Ref<any>;
   hideAssistiveTouch?: boolean;
   callbackEventShowDebugger?: () => void;
+  debugAddOnView?: DebugAddOnView[];
 }
 
 export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
@@ -147,6 +153,7 @@ export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
         }}
         customNetworkComponent={props.customNetworkComponent}
         navigationRef={props.navigationRef}
+        debugAddOnView={props.debugAddOnView}
       />
     </View>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   StyleSheet,
@@ -12,12 +12,14 @@ import NetworkLogger from 'react-native-network-logger';
 import KeyValueTable from './aysnc-storage-logger';
 import { NavigationLogger } from './navigation-logger';
 import ReduxLogger from './redux-logger';
+import type { DebugAddOnView } from '../assistive/assistive-cmp';
 
 interface AssistiveModalProps {
   visible: boolean;
   close: () => void;
   customNetworkComponent?: React.ReactNode;
   navigationRef?: React.Ref<any>;
+  debugAddOnView?: DebugAddOnView[];
 }
 
 const NetworkComponent: React.FC = () => {
@@ -29,29 +31,67 @@ const DataInLocalComponent: React.FC = () => {
 };
 
 export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
-  const [activeTab, setActiveTab] = useState<
-    'network' | 'data' | 'navigation' | 'redux'
-  >('network');
+  const [activeTab, setActiveTab] = useState<string>('network');
+
+  const [listTabDebug, setListTabDebug] = useState<string[]>([
+    'network',
+    'data',
+    'navigation',
+    'redux',
+  ]);
+
+  useEffect(() => {
+    if (props.debugAddOnView) {
+      const keys = props.debugAddOnView.map((item) => item.title);
+      setListTabDebug([...listTabDebug, ...keys]);
+    }
+  }, []);
 
   const renderTabContent = () => {
+    if (!activeTab) return null;
+    let debugView = null;
     switch (activeTab) {
-      case 'network':
-        return props.customNetworkComponent ? (
-          props.customNetworkComponent
-        ) : (
-          <NetworkComponent />
-        );
-      case 'data':
-        return <DataInLocalComponent />;
-      case 'navigation':
-        return <NavigationLogger navigationRef={props.navigationRef} />;
-      case 'redux':
-        return <ReduxLogger />;
-      // case 'dataMMKV':
-      //   return <MMKVKeyValueTable />;
-      default:
-        return null;
+      case 'network': {
+        if (props.customNetworkComponent) {
+          debugView = props.customNetworkComponent;
+        } else {
+          debugView = <NetworkComponent />;
+        }
+        break;
+      }
+      case 'data': {
+        debugView = <DataInLocalComponent />;
+        break;
+      }
+      case 'navigation': {
+        debugView = <NavigationLogger navigationRef={props.navigationRef} />;
+        break;
+      }
+      case 'redux': {
+        debugView = <ReduxLogger />;
+        break;
+      }
     }
+    if (props.debugAddOnView) {
+      const view = props.debugAddOnView.find(
+        (item) => item.title === activeTab
+      );
+      if (view) {
+        debugView = view.component;
+      }
+    }
+    return debugView;
+  };
+
+  const renderItem = (title: string) => {
+    return (
+      <TouchableOpacity
+        style={[styles.tab, activeTab === title && styles.activeTab]}
+        onPress={() => setActiveTab(title)}
+      >
+        <Text style={styles.tabText}>{title}</Text>
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -77,39 +117,7 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
                 horizontal={true}
                 showsHorizontalScrollIndicator={false}
               >
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    activeTab === 'network' && styles.activeTab,
-                  ]}
-                  onPress={() => setActiveTab('network')}
-                >
-                  <Text style={styles.tabText}>Network</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.tab, activeTab === 'data' && styles.activeTab]}
-                  onPress={() => setActiveTab('data')}
-                >
-                  <Text style={styles.tabText}>AsyncStorage</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    activeTab === 'navigation' && styles.activeTab,
-                  ]}
-                  onPress={() => setActiveTab('navigation')}
-                >
-                  <Text style={styles.tabText}>Navigation</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    activeTab === 'redux' && styles.activeTab,
-                  ]}
-                  onPress={() => setActiveTab('redux')}
-                >
-                  <Text style={styles.tabText}>Redux</Text>
-                </TouchableOpacity>
+                {listTabDebug.map((item) => renderItem(item))}
               </ScrollView>
             </View>
             <View style={styles.contentView}>{renderTabContent()}</View>
