@@ -23,6 +23,7 @@ interface AssistiveModalProps {
 }
 
 const NetworkComponent: React.FC = () => {
+
   return <NetworkLogger />;
 };
 
@@ -86,6 +87,7 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
   const renderItem = (title: string) => {
     return (
       <TouchableOpacity
+        key={title}
         style={[styles.tab, activeTab === title && styles.activeTab]}
         onPress={() => setActiveTab(title)}
       >
