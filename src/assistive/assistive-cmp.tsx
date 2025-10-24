@@ -1,11 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Animated,
   View,
   StyleSheet,
   PanResponder,
   Dimensions,
-  TouchableOpacity,
   DeviceEventEmitter,
   type EmitterSubscription,
 } from 'react-native';
@@ -14,7 +13,7 @@ import AssistiveTouchModal from '../modal';
 import RNShake from 'react-native-shake';
 import { checkShakeLibrary } from '../utils/helper';
 
-const { height } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window'); // Add this for screen dimensions
 
 export interface DebugAddOnView {
   title: string;
@@ -34,15 +33,29 @@ interface IAssistiveTouch {
   hideAssistiveTouch?: boolean;
   callbackEventShowDebugger?: () => void;
   debugAddOnView?: DebugAddOnView[];
+  tabs?: string[];
 }
 
 export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
   const [visible, setVisible] = useState(false);
-  let count = 0;
   const FAB_WIDTH = props.size || 70; // Size of the AssistiveTouch (must)
 
-  const pan = useRef(new Animated.ValueXY({ x: 0, y: height / 2 })).current;
-  let panValueRef = useRef({ x: 0, y: height / 2 });
+  const pan = useRef(
+    new Animated.ValueXY({ x: 0, y: SCREEN_HEIGHT / 2 })
+  ).current;
+  let panValueRef = useRef({ x: 0, y: SCREEN_HEIGHT / 2 });
+  const dragStartTime = useRef(0);
+
+  const { hideAssistiveTouch, callbackEventShowDebugger } = props;
+
+  const actionEvent = useCallback(() => {
+    // 1 lần tap là mở luôn
+    if (!hideAssistiveTouch) {
+      setVisible(true);
+    }
+    callbackEventShowDebugger && callbackEventShowDebugger();
+  }, [hideAssistiveTouch, callbackEventShowDebugger]);
+
   useEffect(() => {
     // must record network logs
     AssistiveHelper.shared;
@@ -68,37 +81,58 @@ export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
         subscription.remove();
       }
     };
-  }, []);
-
-  const actionEvent = () => {
-    if (count < 4) {
-      count++;
-      setTimeout(() => {
-        count = 0;
-      }, 3000);
-    } else {
-      if (!props.hideAssistiveTouch) {
-        setVisible(true);
-      }
-      props.callbackEventShowDebugger && props.callbackEventShowDebugger();
-      count = 0;
-    }
-  };
+  }, [actionEvent, pan, props.hideAssistiveTouch]);
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Chỉ bắt đầu pan khi di chuyển đủ xa để tránh conflict với touch
+        const shouldPan =
+          Math.abs(gestureState.dx) > 8 || Math.abs(gestureState.dy) > 8;
+        return shouldPan;
+      },
       onPanResponderGrant: () => {
+        dragStartTime.current = Date.now();
         pan.setOffset({
           x: panValueRef.current.x,
           y: panValueRef.current.y,
         });
+        pan.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
         useNativeDriver: false,
       }),
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (_, gestureState) => {
         pan.flattenOffset();
+        const dragDuration = Date.now() - dragStartTime.current;
+        const dragDistance = Math.sqrt(
+          gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy
+        );
+
+        // Nếu drag distance nhỏ và thời gian ngắn, coi như tap
+        if (dragDistance < 10 && dragDuration < 200) {
+          // Đây là tap (không di chuyển xa), tăng count để show modal sau 5 taps
+          actionEvent();
+          props.onPress?.();
+        } else {
+          // Đây là drag, thực hiện snap to side
+          let targetY = panValueRef.current.y;
+          // Bound Y để không ra ngoài màn hình
+          targetY = Math.max(0, Math.min(targetY, SCREEN_HEIGHT - FAB_WIDTH));
+
+          // Snap X: nếu current X > midpoint (gần right hơn), snap về right (x=0); else snap về left (x= -(SCREEN_WIDTH - FAB_WIDTH))
+          const currentX = panValueRef.current.x;
+          const midpoint = -SCREEN_WIDTH / 2;
+          const targetX = currentX > midpoint ? 0 : -(SCREEN_WIDTH - FAB_WIDTH);
+
+          Animated.spring(pan, {
+            toValue: { x: targetX, y: targetY },
+            useNativeDriver: false, // Không dùng native driver vì PanResponder không tương thích tốt
+          }).start(() => {
+            props.onMoveEnd?.();
+          });
+        }
       },
     })
   ).current;
@@ -106,47 +140,29 @@ export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
   if (props.hideAssistiveTouch) {
     return props.children;
   }
+
   return (
-    <View
-      style={styles.container}
-      onLayout={(_) => {
-        // view_height = e.nativeEvent.layout.height;
-        // view_width = e.nativeEvent.layout.width;
-        // view_start_x = e.nativeEvent.layout.x;
-        // view_start_y = e.nativeEvent.layout.y;
-        // view_end_x = view_start_x + view_width;
-        // view_end_y = view_start_y + view_height;
-        // current_position_x = view_end_x - FAB_WIDTH / 2;
-        // current_position_y = view_height / 2 + view_start_y;
-      }}
-    >
+    <View style={styles.container}>
       {props.children}
       <Animated.View
-        style={{
-          transform: [{ translateX: pan.x }, { translateY: pan.y }],
-          position: 'absolute',
-          right: 0,
-          zIndex: 10,
-        }}
+        style={[
+          styles.animatedContainer,
+          {
+            transform: [{ translateX: pan.x }, { translateY: pan.y }],
+          },
+        ]}
         {...panResponder.panHandlers}
       >
         <View style={[styles.box, { height: FAB_WIDTH, width: FAB_WIDTH }]}>
           {props.button || (
-            <AssistiveTouchButton
-              color={props.color}
-              onPress={() => {
-                if (props.onPress) {
-                  props.onPress();
-                } else {
-                  setVisible(true);
-                }
-              }}
-              size={FAB_WIDTH}
-            />
+            <AssistiveTouchButton color={props.color} size={FAB_WIDTH} />
           )}
         </View>
+        {/* Thêm touch area mở rộng để dễ bấm hơn */}
+        <View style={styles.expandedTouchArea} />
       </Animated.View>
       <AssistiveTouchModal
+        tabs={props.tabs}
         visible={visible}
         close={() => {
           setVisible(false);
@@ -162,7 +178,6 @@ export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
 const AssistiveTouchButton: React.FC<{
   color?: string;
   size: number;
-  onPress?: () => void;
 }> = (props) => {
   const colorStyle = { backgroundColor: 'black' };
   const size = props.size ? props.size : null;
@@ -180,18 +195,13 @@ const AssistiveTouchButton: React.FC<{
     : null;
 
   return (
-    <TouchableOpacity
-      style={[styles.buttonContainer, containerStyleSize]}
-      onPress={() => {
-        props.onPress && props.onPress();
-      }}
-    >
+    <View style={[styles.buttonContainer, containerStyleSize]}>
       <View style={[styles.thirdLayer, thirdLayerSize, colorStyle]}>
         <View style={[styles.secondLayer, secondLayerSize]}>
           <View style={[styles.firstLayer, firstLayerSize]} />
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -201,10 +211,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  animatedContainer: {
+    position: 'absolute',
+    right: 0,
+    zIndex: 10,
+  },
   box: {
     zIndex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  expandedTouchArea: {
+    position: 'absolute',
+    top: -15,
+    left: -15,
+    right: -15,
+    bottom: -15,
+    zIndex: 0,
   },
   buttonContainer: {
     width: 60,
@@ -213,6 +236,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#212121',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 8, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   thirdLayer: {
     width: 40,

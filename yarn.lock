@@ -11979,7 +11979,10 @@ __metadata:
     react: 18.2.0
     react-native: 0.74.1
     react-native-builder-bob: ^0.20.0
+<<<<<<< HEAD
     react-native-gesture-handler: ^2.25.0
+=======
+>>>>>>> 2b7f008 (Fix animation)
     react-native-network-logger: ^1.16.1
     react-native-reanimated: ^3.17.5
     react-native-safe-area-context: ^4.10.1
@@ -14136,7 +14139,11 @@ __metadata:
 
 "typescript@patch:typescript@^4.6.4 || ^5.2.2#~builtin<compat/typescript>, typescript@patch:typescript@^5.2.2#~builtin<compat/typescript>":
   version: 5.4.5
+<<<<<<< HEAD
   resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=14eedb"
+=======
+  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=29ae49"
+>>>>>>> 2b7f008 (Fix animation)
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver

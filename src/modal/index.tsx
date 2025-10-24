@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
-  Modal,
   StyleSheet,
   TouchableOpacity,
   Text,
   View,
   ScrollView,
   SafeAreaView,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import NetworkLogger from 'react-native-network-logger';
 import KeyValueTable from './aysnc-storage-logger';
@@ -20,10 +21,10 @@ interface AssistiveModalProps {
   customNetworkComponent?: React.ReactNode;
   navigationRef?: React.Ref<any>;
   debugAddOnView?: DebugAddOnView[];
+  tabs?: string[];
 }
 
 const NetworkComponent: React.FC = () => {
-
   return <NetworkLogger />;
 };
 
@@ -31,22 +32,57 @@ const DataInLocalComponent: React.FC = () => {
   return <KeyValueTable />;
 };
 
-export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
-  const [activeTab, setActiveTab] = useState<string>('network');
+const DEFAULT_TABS = ['network', 'data', 'navigation', 'redux'];
 
-  const [listTabDebug, setListTabDebug] = useState<string[]>([
-    'network',
-    'data',
-    'navigation',
-    'redux',
-  ]);
+export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
+  const [activeTab, setActiveTab] = useState<string>(
+    props.tabs?.[0] || DEFAULT_TABS[0] || 'network'
+  );
+  const slideAnim = useRef(
+    new Animated.Value(Dimensions.get('window').height)
+  ).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const [listTabDebug, setListTabDebug] = useState<string[]>(
+    props.tabs || DEFAULT_TABS
+  );
 
   useEffect(() => {
     if (props.debugAddOnView) {
       const keys = props.debugAddOnView.map((item) => item.title);
-      setListTabDebug([...listTabDebug, ...keys]);
+      setListTabDebug((prev) => [...prev, ...keys]);
     }
-  }, []);
+  }, [props.debugAddOnView]);
+
+  useEffect(() => {
+    if (props.visible) {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: Dimensions.get('window').height,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [props.visible, slideAnim, fadeAnim]);
 
   const renderTabContent = () => {
     if (!activeTab) return null;
@@ -96,41 +132,78 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
     );
   };
 
+  if (!props.visible) return null;
+
   return (
-    <Modal transparent={true} animationType={'fade'} visible={props.visible}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <View style={styles.containerCard}>
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={{
-                height: '7%',
-                width: '100%',
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderBottomWidth: 0.5,
-              }}
-              onPress={props.close}
-            >
-              <Text>Close</Text>
-            </TouchableOpacity>
-            <View style={{ height: '6%', width: '100%' }}>
-              <ScrollView
-                contentContainerStyle={styles.tabBar}
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
+    <View style={styles.overlay}>
+      <Animated.View
+        style={[
+          styles.overlayBackground,
+          {
+            opacity: fadeAnim,
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.modalContainer,
+          {
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.containerCard}>
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={props.close}
               >
-                {listTabDebug.map((item) => renderItem(item))}
-              </ScrollView>
+                <Text style={styles.closeText}>Close</Text>
+              </TouchableOpacity>
+              <View style={styles.tabContainer}>
+                <ScrollView
+                  contentContainerStyle={styles.tabBar}
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                >
+                  {listTabDebug.map((item) => renderItem(item))}
+                </ScrollView>
+              </View>
+              <View style={styles.contentView}>{renderTabContent()}</View>
             </View>
-            <View style={styles.contentView}>{renderTabContent()}</View>
           </View>
-        </View>
-      </SafeAreaView>
-    </Modal>
+        </SafeAreaView>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+  },
+  overlayBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+  },
   container: {
     flex: 1,
     alignSelf: 'stretch',
@@ -173,6 +246,12 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
+    color: '#000000',
+  },
+  closeText: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: '500',
   },
   tabContent: {
     flex: 1,
@@ -181,6 +260,20 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  closeButton: {
+    height: '7%',
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomWidth: 0.5,
+  },
+  tabContainer: {
+    height: '6%',
+    width: '100%',
   },
 });
 

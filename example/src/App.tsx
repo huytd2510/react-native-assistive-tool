@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -20,6 +20,7 @@ import store from './store';
 import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { mmkv, mmkv2 } from './mmkv/helper';
+import logger from 'react-native-network-logger/src/Logger';
 
 export const navigationRef = React.createRef();
 
@@ -72,14 +73,60 @@ const Home = () => {
     </View>
   );
 };
+
+const getNavigationActionType = (prevState, currentState) => {
+  console.log("currentState", currentState);
+  if (!prevState || !currentState) return 'initial';
+
+  const prevRoute = prevState.routes ? prevState.routes[prevState.index] : null;
+  const currentRoute = currentState.routes ? currentState.routes[currentState.index] : null;
+  console.log('prevRoute', prevRoute);
+  console.log('currentRoute', currentRoute);
+  if (!prevRoute || !currentRoute) return 'initial';
+
+  if (prevRoute.name !== currentRoute.name) {
+    return 'navigate';
+  }
+
+  if (currentRoute.state?.index > prevRoute.state?.index) {
+    return 'push';
+  }
+
+  if (currentRoute.state?.index < prevRoute.state?.index) {
+    return 'pop';
+  }
+
+  return 'unknown';
+};
+
 const App: React.FC = () => {
-  console.log(mmkv.getAllKeys());
+
+  const navigationRef = useRef(null); // Initialize with null
+  const routeNameRef = useRef(null); // Initialize with null
+
+  useEffect(() => {
+    if (navigationRef.current) {
+      routeNameRef.current = navigationRef.current.getCurrentRoute()?.name;
+    }
+  }, []);
+
   return (
     <GestureHandlerRootView>
       <Provider store={store}>
         <NavigationContainer
-          // @ts-ignore
           ref={navigationRef}
+          onReady={() => {
+            if (navigationRef.current) {
+              routeNameRef.current =
+                navigationRef.current.getCurrentRoute()?.name;
+            }
+          }}
+          onStateChange={(state) => {
+            // const navigationAction = getNavigationActionType(
+            //   state,
+            //   navigationRef.current?.gét()
+            // );
+          }}
         >
           <AssistiveTouch
             color="black"
@@ -87,7 +134,13 @@ const App: React.FC = () => {
             // @ts-ignore
             navigationRef={navigationRef}
             callbackEventShowDebugger={() => {}}
-            mmkvInstances={[mmkv, mmkv2]}
+            tabs={['network', 'data']}
+            debugAddOnView={[
+              {
+                title: 'MMKV',
+                component: <MMVKdemo />,
+              },
+            ]}
           >
             <Stack.Navigator>
               <Stack.Screen name={'Home'} component={Home} />
