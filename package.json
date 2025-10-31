@@ -1,6 +1,6 @@
 {
   "name": "react-native-assistive-tool",
-  "version": "0.1.13",
+  "version": "0.1.15",
   "description": "dev tool",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
