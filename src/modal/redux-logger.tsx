@@ -1,13 +1,23 @@
 // ReduxLogger.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Clipboard } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Clipboard,
+} from 'react-native';
 import { useSelector } from 'react-redux';
 
 const isObject = (item: any) => {
   return item && typeof item === 'object' && !Array.isArray(item);
 };
 
-const RenderObject: React.FC<{ data: any; level: number }> = ({ data, level }) => {
+const RenderObject: React.FC<{ data: any; level: number }> = ({
+  data,
+  level,
+}) => {
   const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
 
   const toggleExpansion = (key: string) => {
@@ -21,14 +31,21 @@ const RenderObject: React.FC<{ data: any; level: number }> = ({ data, level }) =
           {isObject(data[key]) ? (
             <>
               <TouchableOpacity onPress={() => toggleExpansion(key)}>
-                <Text style={styles.text}>{`${key}: ${expanded[key] ? '↑' : '↓'}`}</Text>
+                <Text
+                  style={styles.text}
+                >{`${key}: ${expanded[key] ? '↑' : '↓'}`}</Text>
               </TouchableOpacity>
-              {expanded[key] && <RenderObject data={data[key]} level={level + 1} />}
+              {expanded[key] && (
+                <RenderObject data={data[key]} level={level + 1} />
+              )}
             </>
           ) : (
-            <TouchableOpacity style={styles.text} onPress={() => {
-              Clipboard.setString(JSON.stringify(data[key]))
-            }}>
+            <TouchableOpacity
+              style={styles.text}
+              onPress={() => {
+                Clipboard.setString(JSON.stringify(data[key]));
+              }}
+            >
               <Text>{`${key}: ${JSON.stringify(data[key])}`}</Text>
               <Text style={styles.textLip}>Click here to copy </Text>
             </TouchableOpacity>
@@ -65,7 +82,7 @@ const styles = StyleSheet.create({
   },
   textLip: {
     marginTop: 3,
-    fontSize: 9
+    fontSize: 9,
   },
 });
 

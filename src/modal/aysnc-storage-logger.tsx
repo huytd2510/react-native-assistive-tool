@@ -9,6 +9,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Clipboard,
+  Share,
+  Modal,
+  ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -26,6 +30,7 @@ const KeyValueTable: React.FC = () => {
   const [filteredData, setFilteredData] = useState<KeyValueItem[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
+  const [viewingItem, setViewingItem] = useState<KeyValueItem | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -48,6 +53,31 @@ const KeyValueTable: React.FC = () => {
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoading(false);
+    }
+  };
+
+  const formatJSON = (text: string): string => {
+    try {
+      const parsed = JSON.parse(text);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return text;
+    }
+  };
+
+  const handleViewFull = (item: KeyValueItem) => {
+    setViewingItem(item);
+  };
+
+  const handleShare = async (item: KeyValueItem) => {
+    try {
+      const shareContent = `Key: ${item.key}\nValue: ${item.value}`;
+      await Share.share({
+        message: shareContent,
+        title: 'AsyncStorage Item',
+      });
+    } catch (error) {
+      console.error('Error sharing item:', error);
     }
   };
 
@@ -160,9 +190,47 @@ const KeyValueTable: React.FC = () => {
   };
 
   const renderItem = ({ item }: { item: KeyValueItem }) => (
-    <View style={styles.row}>
-      <View style={styles.cellContainer}>
-        <Text style={styles.cell}>{item.key}</Text>
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.keyText} numberOfLines={1} ellipsizeMode="tail">
+          {item.key}
+        </Text>
+        {editingKey !== item.key && (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => handleShare(item)}
+            >
+              <Text style={styles.iconButtonText}>📤</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => {
+                Clipboard.setString(JSON.stringify(item));
+                Alert.alert('Copied', 'Item copied to clipboard');
+              }}
+            >
+              <Text style={styles.iconButtonText}>📋</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => {
+                setEditingKey(item.key);
+                setNewValue(item.value);
+              }}
+            >
+              <Text style={styles.iconButtonText}>✏️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.iconButton, styles.deleteButton]}
+              onPress={() => handleDelete(item.key)}
+            >
+              <Text style={styles.iconButtonText}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+      <View style={styles.cardBody}>
         {editingKey === item.key ? (
           <>
             <TextInput
@@ -171,55 +239,42 @@ const KeyValueTable: React.FC = () => {
               onChangeText={setNewValue}
               placeholder="Enter new value"
               multiline={true}
-              numberOfLines={10}
+              numberOfLines={8}
+              textAlignVertical="top"
             />
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => handleEdit(item.key)}
-            >
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => setEditingKey(null)}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
+            <View style={styles.editActions}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.saveButton]}
+                onPress={() => handleEdit(item.key)}
+              >
+                <Text style={styles.actionButtonText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={() => setEditingKey(null)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </>
         ) : (
-          <Text style={styles.cell} numberOfLines={10} ellipsizeMode={'tail'}>
-            {item.value.substring(0, 100)}
-            {item.value.length > 100 ? '  ...' : ''}
-          </Text>
-        )}
-      </View>
-      <View style={styles.actionContainer}>
-        {editingKey !== item.key && (
-          <>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-                Clipboard.setString(JSON.stringify(item));
-              }}
-            >
-              <Text style={styles.buttonText}>Copy</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-                setEditingKey(item.key);
-                setNewValue(item.value);
-              }}
-            >
-              <Text style={styles.buttonText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => handleDelete(item.key)}
-            >
-              <Text style={styles.buttonText}>Delete</Text>
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity
+            style={styles.valueContainer}
+            onPress={() => handleViewFull(item)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.valueText} numberOfLines={8} ellipsizeMode="tail">
+              {item.value || '(empty)'}
+            </Text>
+            {item.value.length > 200 && (
+              <Text style={styles.truncatedText}>
+                Tap to view full ({item.value.length} characters)
+              </Text>
+            )}
+            {item.value.length <= 200 && item.value && (
+              <Text style={styles.tapHint}>Tap to view formatted</Text>
+            )}
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -231,13 +286,9 @@ const KeyValueTable: React.FC = () => {
         style={styles.searchInput}
         value={searchQuery}
         onChangeText={handleSearch}
-        placeholder="Search by key or value"
+        placeholder="🔍 Search by key..."
+        placeholderTextColor="#9CA3AF"
       />
-      <View style={styles.header}>
-        <Text style={styles.headerCell}>Key</Text>
-        <Text style={styles.headerCell}>Value</Text>
-        <Text style={styles.headerCell}>Actions</Text>
-      </View>
       <FlatList
         data={filteredData}
         renderItem={renderItem}
@@ -245,9 +296,66 @@ const KeyValueTable: React.FC = () => {
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.3}
         ListFooterComponent={
-          loading ? <ActivityIndicator size={'small'} /> : null
+          loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#007AFF" />
+            </View>
+          ) : null
         }
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
+      <Modal
+        visible={viewingItem !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setViewingItem(null)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Value Details</Text>
+            <TouchableOpacity
+              style={styles.closeModalButton}
+              onPress={() => setViewingItem(null)}
+            >
+              <Text style={styles.closeModalText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.modalKeyContainer}>
+            <Text style={styles.modalKeyLabel}>Key:</Text>
+            <Text style={styles.modalKeyText}>{viewingItem?.key}</Text>
+          </View>
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.modalValueLabel}>Value (Formatted):</Text>
+            <Text style={styles.modalValueText}>
+              {viewingItem ? formatJSON(viewingItem.value) : ''}
+            </Text>
+          </ScrollView>
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={[styles.modalActionButton, styles.modalActionButtonWithMargin]}
+              onPress={() => {
+                if (viewingItem) {
+                  Clipboard.setString(viewingItem.value);
+                  Alert.alert('Copied', 'Value copied to clipboard');
+                }
+              }}
+            >
+              <Text style={styles.modalActionButtonText}>📋 Copy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalActionButton}
+              onPress={() => {
+                if (viewingItem) {
+                  handleShare(viewingItem);
+                }
+              }}
+            >
+              <Text style={styles.modalActionButtonText}>📤 Share</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 };
@@ -255,62 +363,248 @@ const KeyValueTable: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    backgroundColor: '#FFFFFF',
   },
   searchInput: {
-    borderColor: '#ccc',
+    backgroundColor: '#F8F9FA',
+    borderColor: '#E9ECEF',
     borderWidth: 1,
     padding: 8,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    marginBottom: 16,
+    margin: 16,
+    marginBottom: 12,
+    fontSize: 14,
+    color: '#000000',
+    height: 40,
   },
-  header: {
+  listContent: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  cardHeader: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#000',
-  },
-  headerCell: {
-    flex: 1,
-    fontWeight: 'bold',
-    padding: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F3F5',
   },
-  cellContainer: {
-    flex: 3,
-    flexDirection: 'column',
+  keyText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginRight: 8,
   },
-  cell: {
-    padding: 8,
+  actionButtons: {
+    flexDirection: 'row',
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    marginLeft: 6,
+  },
+  deleteButton: {
+    backgroundColor: '#FFF5F5',
+    borderColor: '#FEE2E2',
+  },
+  iconButtonText: {
+    fontSize: 16,
+  },
+  cardBody: {
+    minHeight: 60,
+  },
+  valueContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    minHeight: 60,
+  },
+  valueText: {
+    fontSize: 13,
+    color: '#374151',
+    lineHeight: 20,
+    fontFamily: 'monospace',
+  },
+  truncatedText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   input: {
-    borderColor: '#ccc',
-    borderWidth: 1,
-    padding: 8,
-    margin: 8,
-    height: 200,
-    textAlignVertical: 'top',
-    color: 'black',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#007AFF',
+    borderWidth: 2,
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 150,
+    fontSize: 13,
+    color: '#000000',
+    fontFamily: 'monospace',
+    marginBottom: 12,
   },
-  actionContainer: {
+  editActions: {
+    flexDirection: 'row',
+  },
+  actionButton: {
     flex: 1,
-    height: '100%',
-    paddingTop: 20,
-    flexDirection: 'column',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
-  button: {
-    backgroundColor: '#007BFF',
-    padding: 8,
-    marginVertical: 4,
-    borderRadius: 4,
+  saveButton: {
+    backgroundColor: '#007AFF',
   },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
+  cancelButton: {
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  tapHint: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    marginTop: 4,
+    fontStyle: 'italic',
+    textAlign: 'right',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E9ECEF',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+  },
+  closeModalButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  closeModalText: {
+    fontSize: 18,
+    color: '#374151',
+    fontWeight: '600',
+  },
+  modalKeyContainer: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E9ECEF',
+    backgroundColor: '#F8F9FA',
+  },
+  modalKeyLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6C757D',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  modalKeyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  modalValueLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6C757D',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  modalValueText: {
+    fontSize: 13,
+    color: '#374151',
+    fontFamily: 'monospace',
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+    lineHeight: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+  },
+  modalActionButton: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalActionButtonWithMargin: {
+    marginRight: 12,
+  },
+  modalActionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

@@ -179,24 +179,24 @@ const AssistiveTouchButton: React.FC<{
   color?: string;
   size: number;
 }> = (props) => {
-  const colorStyle = { backgroundColor: 'black' };
+  const buttonColor = props.color || '#007AFF';
   const size = props.size ? props.size : null;
   const containerStyleSize = size
     ? { height: size - 10, width: size - 10 }
     : null;
   const thirdLayerSize = size
-    ? { height: size - 30, width: size - 30, borderRadius: (size - 30) / 2 }
+    ? { height: size - 16, width: size - 16, borderRadius: (size - 16) / 2 }
     : null;
   const secondLayerSize = size
-    ? { height: size - 40, width: size - 40, borderRadius: (size - 40) / 2 }
+    ? { height: size - 28, width: size - 28, borderRadius: (size - 28) / 2 }
     : null;
   const firstLayerSize = size
-    ? { height: size - 50, width: size - 50, borderRadius: (size - 50) / 2 }
+    ? { height: size - 40, width: size - 40, borderRadius: (size - 40) / 2 }
     : null;
 
   return (
-    <View style={[styles.buttonContainer, containerStyleSize]}>
-      <View style={[styles.thirdLayer, thirdLayerSize, colorStyle]}>
+    <View style={[styles.buttonContainer, containerStyleSize, { backgroundColor: buttonColor }]}>
+      <View style={[styles.thirdLayer, thirdLayerSize]}>
         <View style={[styles.secondLayer, secondLayerSize]}>
           <View style={[styles.firstLayer, firstLayerSize]} />
         </View>
@@ -232,32 +232,32 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: 60,
     height: 60,
-    borderRadius: 5,
-    backgroundColor: '#212121',
+    borderRadius: 30,
+    backgroundColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    elevation: 12,
+    shadowColor: '#007AFF',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
   thirdLayer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255, 0.4)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   secondLayer: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255,255,255, 0.7)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },

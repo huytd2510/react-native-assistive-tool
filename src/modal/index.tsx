@@ -7,7 +7,6 @@ import {
   ScrollView,
   SafeAreaView,
   Animated,
-  Dimensions,
 } from 'react-native';
 import NetworkLogger from 'react-native-network-logger';
 import KeyValueTable from './aysnc-storage-logger';
@@ -38,28 +37,37 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
   const [activeTab, setActiveTab] = useState<string>(
     props.tabs?.[0] || DEFAULT_TABS[0] || 'network'
   );
-  const slideAnim = useRef(
-    new Animated.Value(Dimensions.get('window').height)
-  ).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const [listTabDebug, setListTabDebug] = useState<string[]>(
-    props.tabs || DEFAULT_TABS
-  );
+  const [listTabDebug, setListTabDebug] = useState<string[]>(() => {
+    const baseTabs = props.tabs || DEFAULT_TABS;
+    if (props.debugAddOnView) {
+      const keys = props.debugAddOnView.map((item) => item.title);
+      return [...baseTabs, ...keys];
+    }
+    return baseTabs;
+  });
 
   useEffect(() => {
     if (props.debugAddOnView) {
       const keys = props.debugAddOnView.map((item) => item.title);
-      setListTabDebug((prev) => [...prev, ...keys]);
+      setListTabDebug((prev) => {
+        // Chỉ thêm keys mới, không thêm duplicate
+        const existingKeys = new Set(prev);
+        const newKeys = keys.filter((key) => !existingKeys.has(key));
+        return newKeys.length > 0 ? [...prev, ...newKeys] : prev;
+      });
     }
   }, [props.debugAddOnView]);
 
   useEffect(() => {
     if (props.visible) {
       Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
+        Animated.spring(slideAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
@@ -71,13 +79,13 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
     } else {
       Animated.parallel([
         Animated.timing(slideAnim, {
-          toValue: Dimensions.get('window').height,
-          duration: 300,
+          toValue: 0,
+          duration: 250,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 300,
+          duration: 250,
           useNativeDriver: true,
         }),
       ]).start();
@@ -121,13 +129,17 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
   };
 
   const renderItem = (title: string) => {
+    const isActive = activeTab === title;
     return (
       <TouchableOpacity
         key={title}
-        style={[styles.tab, activeTab === title && styles.activeTab]}
+        style={[styles.tab, isActive && styles.activeTab]}
         onPress={() => setActiveTab(title)}
+        activeOpacity={0.7}
       >
-        <Text style={styles.tabText}>{title}</Text>
+        <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+          {title}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -148,32 +160,35 @@ export const AssistiveTouchModal: React.FC<AssistiveModalProps> = (props) => {
         style={[
           styles.modalContainer,
           {
-            transform: [{ translateY: slideAnim }],
+            opacity: fadeAnim,
+            transform: [
+              {
+                scale: slideAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.9, 1],
+                }),
+              },
+            ],
           },
         ]}
       >
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.containerCard}>
-            <View style={styles.card}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={props.close}
+        <View style={styles.card}>
+          <SafeAreaView style={styles.safeArea}>
+            <TouchableOpacity style={styles.closeButton} onPress={props.close}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+            <View style={styles.tabContainer}>
+              <ScrollView
+                contentContainerStyle={styles.tabBar}
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
               >
-                <Text style={styles.closeText}>Close</Text>
-              </TouchableOpacity>
-              <View style={styles.tabContainer}>
-                <ScrollView
-                  contentContainerStyle={styles.tabBar}
-                  horizontal={true}
-                  showsHorizontalScrollIndicator={false}
-                >
-                  {listTabDebug.map((item) => renderItem(item))}
-                </ScrollView>
-              </View>
-              <View style={styles.contentView}>{renderTabContent()}</View>
+                {listTabDebug.map((item) => renderItem(item))}
+              </ScrollView>
             </View>
-          </View>
-        </SafeAreaView>
+            <View style={styles.contentView}>{renderTabContent()}</View>
+          </SafeAreaView>
+        </View>
       </Animated.View>
     </View>
   );
@@ -194,7 +209,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modalContainer: {
     position: 'absolute',
@@ -202,56 +217,73 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
   },
   container: {
     flex: 1,
     alignSelf: 'stretch',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   contentView: {
-    height: '85%',
-    borderTopWidth: 0.5,
-    borderTopColor: 'grey',
-  },
-  containerCard: {
-    alignSelf: 'stretch',
-    height: '100%',
-    width: '100%',
-    backgroundColor: 'grey',
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   card: {
-    alignSelf: 'stretch',
-    height: '90%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    margin: 20,
+    width: '100%',
+    height: '95%',
+    maxHeight: '95%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 16,
   },
   tabBar: {
-    justifyContent: 'space-around',
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    backgroundColor: '#F8F9FA',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    height: 40,
-    backgroundColor: 'row',
+    borderBottomColor: '#E9ECEF',
+    minHeight: 44,
+    alignItems: 'center',
   },
   tab: {
-    padding: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginHorizontal: 3,
+    borderRadius: 16,
+    minWidth: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: 'blue',
+    backgroundColor: '#007AFF',
   },
   tabText: {
-    fontSize: 14,
-    color: '#000000',
+    fontSize: 12,
+    color: '#6C757D',
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  activeTabText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   closeText: {
-    fontSize: 16,
-    color: '#000000',
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#007AFF',
+    fontWeight: '600',
   },
   tabContent: {
     flex: 1,
@@ -263,17 +295,19 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    width: '100%',
   },
   closeButton: {
-    height: '7%',
+    height: 44,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderBottomWidth: 0.5,
+    backgroundColor: '#F8F9FA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E9ECEF',
   },
   tabContainer: {
-    height: '6%',
-    width: '100%',
+    backgroundColor: '#F8F9FA',
   },
 });
 
