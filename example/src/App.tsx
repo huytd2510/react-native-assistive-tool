@@ -19,8 +19,6 @@ import { NavigationDemo } from './navigation/navigation-demo';
 import store from './store';
 import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { mmkv, mmkv2 } from './mmkv/helper';
-import logger from 'react-native-network-logger/src/Logger';
 
 export const navigationRef = React.createRef();
 
@@ -135,6 +133,9 @@ const App: React.FC = () => {
             navigationRef={navigationRef}
             callbackEventShowDebugger={() => {}}
             tabs={['network', 'data']}
+            ignoredHosts={['google.com']}
+            ignoredUrls={['https://myservice.com/ping']}
+            ignoredPatterns={[/POST \/.*\/logging$/]}
             debugAddOnView={[
               {
                 title: 'MMKV',

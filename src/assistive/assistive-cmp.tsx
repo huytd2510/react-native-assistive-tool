@@ -34,6 +34,9 @@ interface IAssistiveTouch {
   callbackEventShowDebugger?: () => void;
   debugAddOnView?: DebugAddOnView[];
   tabs?: string[];
+  ignoredHosts?: string[];
+  ignoredUrls?: string[];
+  ignoredPatterns?: RegExp[];
 }
 
 export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
@@ -58,7 +61,11 @@ export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
 
   useEffect(() => {
     // must record network logs
-    AssistiveHelper.shared;
+    AssistiveHelper.shared.init({
+      ignoredHosts: props.ignoredHosts,
+      ignoredUrls: props.ignoredUrls,
+      ignoredPatterns: props.ignoredPatterns,
+    });
     pan.addListener((value) => {
       panValueRef.current = value;
     });
@@ -81,7 +88,14 @@ export const AssistiveTouch: React.FC<IAssistiveTouch> = (props) => {
         subscription.remove();
       }
     };
-  }, [actionEvent, pan, props.hideAssistiveTouch]);
+  }, [
+    actionEvent,
+    pan,
+    props.hideAssistiveTouch,
+    props.ignoredHosts,
+    props.ignoredUrls,
+    props.ignoredPatterns,
+  ]);
 
   const panResponder = useRef(
     PanResponder.create({
